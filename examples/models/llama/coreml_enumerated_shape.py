@@ -49,7 +49,11 @@ def get_example_inputs(max_batch_size, args, coreml=False, use_enumerated_shapes
 
 
 # Batch with kv cache runs into issues
-max_batch_size = args.max_seq_length
+if args.use_kv_cache and not args.enable_dynamic_shape:
+    max_batch_size = 1
+else:
+    max_batch_size = args.max_seq_length
+
 example_inputs = get_example_inputs(max_batch_size, args)
 
 

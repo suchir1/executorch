@@ -85,20 +85,20 @@ static NSMutableDictionary *DummyInputsForModel(MLModel *model, NSError **error)
                 XCTFail(@"Failed to load model: %@", error.localizedDescription);
                 return;
             }
-            //      NSMutableDictionary *inputs = DummyInputsForModel(model, &error);
-            //      if (error || !inputs) {
-            //        XCTFail(@"Failed to prepare inputs: %@", error.localizedDescription);
-            //        return;
-            //      }
-            //      MLDictionaryFeatureProvider *featureProvider = [[MLDictionaryFeatureProvider alloc] initWithDictionary:inputs error:&error];
-            //      if (error || !featureProvider) {
-            //          if (error) {
-            //              XCTFail(@"Failed to create input provider: %@", error.localizedDescription);
-            //          } else {
-            //              XCTFail(@"Failed with unknown error");
-            //          }
-            //        return;
-            //      }
+            NSMutableDictionary *inputs = DummyInputsForModel(model, &error);
+            if (error || !inputs) {
+                XCTFail(@"Failed to prepare inputs: %@", error.localizedDescription);
+                return;
+            }
+            MLDictionaryFeatureProvider *featureProvider = [[MLDictionaryFeatureProvider alloc] initWithDictionary:inputs error:&error];
+            if (error || !featureProvider) {
+                if (error) {
+                    XCTFail(@"Failed to create input provider: %@", error.localizedDescription);
+                } else {
+                    XCTFail(@"Failed with unknown error");
+                }
+                return;
+            }
 
 
             MLMultiArray *tokensArray1x1 = [[MLMultiArray alloc] initWithShape:@[@1, @1] dataType:MLMultiArrayDataTypeInt32 error:&error];
@@ -122,6 +122,8 @@ static NSMutableDictionary *DummyInputsForModel(MLModel *model, NSError **error)
                 id<MLFeatureProvider> prediction;
                 for (int i = 0; i < 50; i++) {
                     // prediction = [model predictionFromFeatures:featureProvider usingState:state error:&error];
+
+
                     if (i % 2 == 0) {
                         prediction = [model predictionFromFeatures:features1x128 error:&error];
                     } else {
