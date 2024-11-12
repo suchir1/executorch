@@ -51,6 +51,9 @@ Error QnnBackendCache::GetQnnGraphInfoFromBinary() {
   } else if (binaryinfo->version == QNN_SYSTEM_CONTEXT_BINARY_INFO_VERSION_2) {
     num_graphs = binaryinfo->contextBinaryInfoV2.numGraphs;
     graph = binaryinfo->contextBinaryInfoV2.graphs;
+  } else if (binaryinfo->version == QNN_SYSTEM_CONTEXT_BINARY_INFO_VERSION_3) {
+    num_graphs = binaryinfo->contextBinaryInfoV3.numGraphs;
+    graph = binaryinfo->contextBinaryInfoV3.graphs;
   } else {
     QNN_EXECUTORCH_LOG_WARN(
         "Unknown QNN BinaryInfo version %d.", binaryinfo->version);
@@ -65,27 +68,44 @@ Error QnnBackendCache::GetQnnGraphInfoFromBinary() {
     return Error::Internal;
   }
 
-  // only have version_1 now
-  if (graph[0].version != QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_1) {
+  if (graph[0].version == QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_1) {
+    // get graph name from metadata
+    graph_name_ = graph->graphInfoV1.graphName;
+
+    // get graph inputs from metadata
+    uint32_t numGraphInputs = graph->graphInfoV1.numGraphInputs;
+    input_tensor_structs_.reserve(numGraphInputs);
+    for (std::uint32_t i = 0; i < numGraphInputs; ++i) {
+      input_tensor_structs_.emplace_back(graph->graphInfoV1.graphInputs[i]);
+    }
+
+    // get graph outputs from metadata
+    uint32_t numGraphOutputs = graph->graphInfoV1.numGraphOutputs;
+    output_tensor_structs_.reserve(numGraphOutputs);
+    for (std::uint32_t i = 0; i < numGraphOutputs; ++i) {
+      output_tensor_structs_.emplace_back(graph->graphInfoV1.graphOutputs[i]);
+    }
+  } else if (graph[0].version == QNN_SYSTEM_CONTEXT_GRAPH_INFO_VERSION_3) {
+    // get graph name from metadata
+    graph_name_ = graph->graphInfoV3.graphName;
+
+    // get graph inputs from metadata
+    uint32_t numGraphInputs = graph->graphInfoV3.numGraphInputs;
+    input_tensor_structs_.reserve(numGraphInputs);
+    for (std::uint32_t i = 0; i < numGraphInputs; ++i) {
+      input_tensor_structs_.emplace_back(graph->graphInfoV3.graphInputs[i]);
+    }
+
+    // get graph outputs from metadata
+    uint32_t numGraphOutputs = graph->graphInfoV3.numGraphOutputs;
+    output_tensor_structs_.reserve(numGraphOutputs);
+    for (std::uint32_t i = 0; i < numGraphOutputs; ++i) {
+      output_tensor_structs_.emplace_back(graph->graphInfoV3.graphOutputs[i]);
+    }
+  } else {
     QNN_EXECUTORCH_LOG_WARN(
         "Unknown QNN GraphInfo version %d.", graph[0].version);
     return Error::Internal;
-  }
-  // get graph name from metadata
-  graph_name_ = graph->graphInfoV1.graphName;
-
-  // get graph inputs from metadata
-  uint32_t numGraphInputs = graph->graphInfoV1.numGraphInputs;
-  input_tensor_structs_.reserve(numGraphInputs);
-  for (std::uint32_t i = 0; i < numGraphInputs; ++i) {
-    input_tensor_structs_.emplace_back(graph->graphInfoV1.graphInputs[i]);
-  }
-
-  // get graph outputs from metadata
-  uint32_t numGraphOutputs = graph->graphInfoV1.numGraphOutputs;
-  output_tensor_structs_.reserve(numGraphOutputs);
-  for (std::uint32_t i = 0; i < numGraphOutputs; ++i) {
-    output_tensor_structs_.emplace_back(graph->graphInfoV1.graphOutputs[i]);
   }
 
   return Error::Ok;
