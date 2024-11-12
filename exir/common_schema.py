@@ -6,7 +6,10 @@
 
 # pyre-unsafe
 
+from dataclasses import dataclass
 from enum import IntEnum
+
+# Check exir/common.fbs for explanations of these fields.
 
 
 class ScalarType(IntEnum):
@@ -29,3 +32,9 @@ class ScalarType(IntEnum):
     QUINT4x2 = 16
     QUINT2x4 = 17
     BITS16 = 22
+
+
+@dataclass
+class DataSegment:
+    offset: int
+    size: int
